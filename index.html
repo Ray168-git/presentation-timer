@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>タイマー & ストップウォッチ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
   <style>
     body { font-family: sans-serif; text-align: center; padding: 20px; }
     h1 { font-size: 2rem; margin-top: 30px; }
     .section { margin-top: 40px; }
-    input, button { margin: 5px; padding: 8px; font-size: 1rem; }
+    input, button, textarea { margin: 5px; padding: 8px; font-size: 1rem; }
     .display { font-size: 3rem; margin: 15px; }
+    textarea { width: 80%; height: 60px; }
   </style>
 </head>
 <body>
@@ -22,10 +25,11 @@
     <button onclick="stopStopwatch()">停止</button>
     <button onclick="resetStopwatch()">リセット</button>
     <br>
-    音を鳴らす時間（時:分:秒）:
-    <input type="number" id="swAlarmHour" value="0" min="0"> 時
-    <input type="number" id="swAlarmMin" value="0" min="0"> 分
-    <input type="number" id="swAlarmSec" value="5" min="0"> 秒
+    アラームを鳴らす: 
+    <input type="checkbox" id="swAlarmEnabled" checked>
+    <br>
+    アラーム時刻（例: 0:0:5,0:1:0）:
+    <textarea id="swAlarmTimes">0:0:5</textarea>
   </div>
 
   <!-- タイマー -->
@@ -49,6 +53,10 @@
   <audio id="bell" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
 
   <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js');
+    }
+
     function playBell() {
       document.getElementById("bell").play();
     }
@@ -56,24 +64,36 @@
     // ストップウォッチ
     let swTime = 0;
     let swInterval;
+    let alarmList = [];
+
+    function parseAlarmTimes() {
+      const raw = document.getElementById('swAlarmTimes').value;
+      alarmList = raw.split(',')
+        .map(t => t.trim())
+        .map(t => {
+          const [h, m, s] = t.split(':').map(Number);
+          return h * 3600 + m * 60 + s;
+        })
+        .filter(n => !isNaN(n));
+    }
+
     function updateStopwatch() {
       const h = String(Math.floor(swTime / 3600)).padStart(2, '0');
       const m = String(Math.floor((swTime % 3600) / 60)).padStart(2, '0');
       const s = String(swTime % 60).padStart(2, '0');
       document.getElementById('stopwatchDisplay').textContent = `${h}:${m}:${s}`;
 
-      const alarmH = parseInt(document.getElementById('swAlarmHour').value);
-      const alarmM = parseInt(document.getElementById('swAlarmMin').value);
-      const alarmS = parseInt(document.getElementById('swAlarmSec').value);
-      const alarmTotal = alarmH * 3600 + alarmM * 60 + alarmS;
-      if (swTime === alarmTotal) {
+      const alarmEnabled = document.getElementById('swAlarmEnabled').checked;
+      if (alarmEnabled && alarmList.includes(swTime)) {
         playBell();
       }
 
       swTime++;
     }
+
     function startStopwatch() {
       clearInterval(swInterval);
+      parseAlarmTimes();
       swInterval = setInterval(updateStopwatch, 1000);
     }
     function stopStopwatch() {
@@ -94,7 +114,7 @@
         playBell();
         clearInterval(timerInterval);
         if (document.getElementById('autoRepeat').checked) {
-          startTimer(); // 自動で再スタート
+          startTimer();
         }
         return;
       }
@@ -104,6 +124,7 @@
       const s = String(timerTime % 60).padStart(2, '0');
       document.getElementById('timerDisplay').textContent = `${h}:${m}:${s}`;
     }
+
     function startTimer() {
       clearInterval(timerInterval);
       const h = parseInt(document.getElementById('timerHour').value);
@@ -113,9 +134,11 @@
       updateTimer();
       timerInterval = setInterval(updateTimer, 1000);
     }
+
     function stopTimer() {
       clearInterval(timerInterval);
     }
+
     function resetTimer() {
       clearInterval(timerInterval);
       const h = parseInt(document.getElementById('timerHour').value);
