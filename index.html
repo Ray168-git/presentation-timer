@@ -7,7 +7,7 @@
     body { font-family: sans-serif; text-align: center; padding: 20px; }
     h1 { font-size: 2rem; margin-top: 30px; }
     .section { margin-top: 40px; }
-    input, select, button { margin: 5px; padding: 8px; font-size: 1rem; }
+    input, button { margin: 5px; padding: 8px; font-size: 1rem; }
     .display { font-size: 3rem; margin: 15px; }
   </style>
 </head>
@@ -45,25 +45,12 @@
     <label for="autoRepeat">ON</label>
   </div>
 
-  <!-- 音の選択 -->
-  <div class="section">
-    <h2>通知音の選択</h2>
-    <select id="soundSelect">
-      <option value="bell">ベル</option>
-      <option value="ding">ディン</option>
-      <option value="chime">チャイム</option>
-    </select>
-
-    <!-- 音ファイル -->
-    <audio id="bell" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
-    <audio id="ding" src="https://www.soundjay.com/button/beep-07.wav"></audio>
-    <audio id="chime" src="https://www.soundjay.com/misc/sounds/chime-bell-ding-01.mp3"></audio>
-  </div>
+  <!-- 音 -->
+  <audio id="bell" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
 
   <script>
-    function playSelectedSound() {
-      const sound = document.getElementById("soundSelect").value;
-      document.getElementById(sound).play();
+    function playBell() {
+      document.getElementById("bell").play();
     }
 
     // ストップウォッチ
@@ -80,7 +67,7 @@
       const alarmS = parseInt(document.getElementById('swAlarmSec').value);
       const alarmTotal = alarmH * 3600 + alarmM * 60 + alarmS;
       if (swTime === alarmTotal) {
-        playSelectedSound();
+        playBell();
       }
 
       swTime++;
@@ -104,7 +91,7 @@
     function updateTimer() {
       if (timerTime <= 0) {
         document.getElementById('timerDisplay').textContent = '00:00:00';
-        playSelectedSound();
+        playBell();
         clearInterval(timerInterval);
         if (document.getElementById('autoRepeat').checked) {
           startTimer(); // 自動で再スタート
@@ -134,12 +121,11 @@
       const h = parseInt(document.getElementById('timerHour').value);
       const m = parseInt(document.getElementById('timerMin').value);
       const s = parseInt(document.getElementById('timerSec').value);
-      const total = h * 3600 + m * 60 + s;
       const hh = String(h).padStart(2, '0');
       const mm = String(m).padStart(2, '0');
       const ss = String(s).padStart(2, '0');
       document.getElementById('timerDisplay').textContent = `${hh}:${mm}:${ss}`;
-      timerTime = total;
+      timerTime = h * 3600 + m * 60 + s;
     }
 
     resetTimer();
